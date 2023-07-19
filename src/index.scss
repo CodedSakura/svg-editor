@@ -8,6 +8,16 @@ html, body, #root {
   display: grid;
   grid-template-columns: min-content 1fr min-content min-content;
   grid-template-rows: min-content 1fr auto;
+  background: #444;
+  color: #fffe;
+
+  & > svg.light {
+    background: #fff;
+
+    pattern#grid {
+      stroke: #6668;
+    }
+  }
 }
 
 #menubar {
@@ -31,19 +41,28 @@ html, body, #root {
 }
 
 .sidebar {
-  & > div {
+  > div {
     width: 32px;
     height: 32px;
     border: 1px solid #0007;
     border-radius: 8px;
-    margin: 2px 2px 2px 2px;
+    margin: 2px;
     text-align: center;
     line-height: 32px;
-    cursor: pointer;
+    cursor: default;
+    overflow: clip;
 
     &:hover {
       background: #0003;
     }
+
+    &.active {
+      background: #0007;
+    }
+  }
+
+  hr {
+    margin: 3px 2px;
   }
 }
 
