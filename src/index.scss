@@ -41,6 +41,13 @@ html, body, #root {
 }
 
 .sidebar {
+  overflow-y: auto;
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
   > div {
     width: 32px;
     height: 32px;

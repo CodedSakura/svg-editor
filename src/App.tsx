@@ -118,15 +118,16 @@ export default function App() {
       </div>
     </div>
     <div id="size-adjust" onMouseDown={() => setDragModal(DragModalState.RESIZE_BOTTOM)}></div>
-    <div className="sidebar">
+    <div className="sidebar" style={{ height: bottomHeight }}>
       <div>Q</div>
       <div>W</div>
       <div>E</div>
     </div>
     <div className="textarea" style={{ height: bottomHeight }}>Textarea</div>
-    <div className="sidebar">
+    <div className="sidebar" style={{ height: bottomHeight }}>
       <div>A</div>
       <div>S</div>
+      <div>D</div>
       <div>D</div>
     </div>
     <div id="modals">
