@@ -56,6 +56,7 @@ export default function App() {
   const [ dragModal, setDragModal ] = useState(DragModalState.OFF);
   const [ lightMode, setLightMode ] = useState(false);
   const [ tool, setTool ] = useState(Tool.CURSOR);
+  const [ canvasOffset, setCanvasOffset ] = useState({ x: 0, y: 0 });
   // const [ propertyPanel, setPropertyPanel ] = useState(PropertyPanel.NONE);
 
   const dragModalMove = useCallback((e: React.MouseEvent) => {
@@ -69,6 +70,25 @@ export default function App() {
       return;
     }
   }, [ dragModal ]);
+
+  const canvasMouseDownEvent = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log("down", e.buttons);
+  }, []);
+
+  const canvasMouseUpEvent = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log("up", e.buttons);
+  }, [ canvasOffset ]);
+
+  const canvasMouseMoveEvent = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+
+    if ((tool === Tool.MOVE && e.buttons === 1) || e.buttons === 4) {
+      setCanvasOffset(({ x, y }) => ({ x: x + e.movementX, y: y + e.movementY }));
+    }
+    // console.log((e.target as HTMLElement));
+  }, [ tool ]);
 
   return <>
     <div id="menubar">
@@ -92,16 +112,25 @@ export default function App() {
 
     <div className="sidebar">
       {toolList.map((tools, i) => [
-        i === 0 ? null : <hr />,
+        i === 0 ? null : <hr key={`hr-${i}`} />,
         tools.map(t => <div
+              key={t}
               className={tool === t ? "active" : undefined}
               onClick={() => setTool(t)}
               title={`${toolData[t].name}${toolData[t].description ? `\n${toolData[t].description}` : ""}`}
         >{toolData[t].name}</div>),
       ])}
     </div>
-    <svg width="100%" height="100%" className={lightMode ? "light" : undefined}>
-      <pattern id="grid" x={-5} y={-5} viewBox="0 0 10 10" width={10} height={10} patternUnits="userSpaceOnUse" stroke="#8888">
+    <svg
+          width="100%" height="100%"
+          className={lightMode ? "light" : undefined}
+          onMouseDown={canvasMouseDownEvent}
+          onMouseUp={canvasMouseUpEvent}
+          onContextMenu={e => e.preventDefault()}
+          onMouseMove={canvasMouseMoveEvent}
+    >
+      <pattern id="grid" x={-5 + canvasOffset.x % 10} y={-5 + canvasOffset.y % 10} viewBox="0 0 10 10" width={10} height={10} patternUnits="userSpaceOnUse"
+               stroke="#8888">
         <line x1={0} x2={10} strokeWidth={1} />
         <line y1={0} y2={10} strokeWidth={1} />
       </pattern>
