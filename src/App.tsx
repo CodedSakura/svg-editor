@@ -7,6 +7,8 @@ enum DragModalState {
 
 enum Tool {
   CURSOR,
+  SQUARE,
+  ELLIPSE,
   LINE,
   ARC,
   BEZIER,
@@ -16,11 +18,14 @@ enum Tool {
 
 const toolList = [
   [
-    Tool.CURSOR,
+    Tool.SQUARE,
+    Tool.ELLIPSE,
   ], [
     Tool.LINE,
     Tool.ARC,
     Tool.BEZIER,
+  ], [
+    Tool.CURSOR,
   ], [
     Tool.MOVE,
     Tool.ZOOM,
@@ -28,6 +33,8 @@ const toolList = [
 ] as const;
 const toolData: Record<Tool, { name: string, description?: string }> = {
   [Tool.CURSOR]: { name: "Cursor" },
+  [Tool.SQUARE]: { name: "Square" },
+  [Tool.ELLIPSE]: { name: "Ellipse" },
   [Tool.LINE]: { name: "Line" },
   [Tool.ARC]: { name: "Arc" },
   [Tool.BEZIER]: { name: "Bezier" },
@@ -35,12 +42,12 @@ const toolData: Record<Tool, { name: string, description?: string }> = {
   [Tool.ZOOM]: { name: "Zoom" },
 } as const;
 
-enum PropertyPanel {
+/*enum PropertyPanel {
   NONE,
   NEW,
   PATHS,
   PATH_PROPS,
-}
+}*/
 
 
 export default function App() {
@@ -49,7 +56,7 @@ export default function App() {
   const [ dragModal, setDragModal ] = useState(DragModalState.OFF);
   const [ lightMode, setLightMode ] = useState(false);
   const [ tool, setTool ] = useState(Tool.CURSOR);
-  const [ propertyPanel, setPropertyPanel ] = useState(PropertyPanel.NONE);
+  // const [ propertyPanel, setPropertyPanel ] = useState(PropertyPanel.NONE);
 
   const dragModalMove = useCallback((e: React.MouseEvent) => {
     if (dragModal === DragModalState.OFF) {
