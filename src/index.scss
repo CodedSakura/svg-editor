@@ -10,12 +10,24 @@ html, body, #root {
   grid-template-rows: min-content 1fr auto;
   background: #444;
   color: #fffe;
+}
 
-  & > svg.light {
-    background: #fff;
+svg.canvas {
+  background: #222;
 
-    pattern#grid {
+  .page {
+    fill: #444;
+  }
+
+  &.light {
+    background: #ddd;
+
+    #grid {
       stroke: #6668;
+    }
+
+    .page {
+      fill: #fff;
     }
   }
 }
