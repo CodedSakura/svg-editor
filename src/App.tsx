@@ -78,6 +78,7 @@ export default function App() {
   const [ lightMode, setLightMode ] = useState(false);
   const [ tool, setTool ] = useState(Tool.CURSOR);
   const [ canvasOffset, setCanvasOffset ] = useState({ x: 0, y: 0 });
+  const [ canvasPixelSize, setCanvasPixelSize ] = useState(10);
   // const [ propertyPanel, setPropertyPanel ] = useState(PropertyPanel.NONE);
   const canvasRef = useRef<SVGSVGElement>(null);
 
@@ -87,7 +88,7 @@ export default function App() {
       return;
     }
     const { width, height } = canvasRef.current.getBoundingClientRect();
-    setCanvasOffset({ x: width / 2 - size[0] / 2 * 10, y: height / 2 - size[0] / 2 * 10 });
+    setCanvasOffset({ x: width / 2 - size[0] / 2 * canvasPixelSize, y: height / 2 - size[0] / 2 * canvasPixelSize });
 
     canvasRef.current.addEventListener("wheel", canvasScrollEvent, { passive: false });
 
@@ -139,8 +140,11 @@ export default function App() {
     if (mods === KeyboardModifier.Shift) {
       setCanvasOffset(({ x, y }) => ({ x: x - e.deltaY, y: y - e.deltaX }));
     }
-    if (mods === KeyboardModifier.Alt) {
-      // setCanvasOffset(({ x, y }) => ({ x: x - e.deltaY, y: y - e.deltaY }));
+    if (mods === KeyboardModifier.Ctrl) {
+      setCanvasPixelSize(v => Math.max(1, v - Math.sign(e.deltaY) * Math.ceil(Math.cbrt(v))));
+    }
+    if (mods === (KeyboardModifier.Shift | KeyboardModifier.Ctrl)) {
+      setCanvasPixelSize(v => Math.max(1, v - Math.sign(e.deltaY) * .5));
     }
   }, []);
 
@@ -184,13 +188,16 @@ export default function App() {
           onMouseMove={canvasMouseMoveEvent}
           ref={canvasRef}
     >
-      <pattern id="grid" x={canvasOffset.x % 10} y={canvasOffset.y % 10} viewBox="0 0 10 10" width={10} height={10} patternUnits="userSpaceOnUse"
+      <pattern id="grid" x={canvasOffset.x % canvasPixelSize} y={canvasOffset.y % canvasPixelSize} viewBox={`0 0 ${canvasPixelSize} ${canvasPixelSize}`}
+               width={canvasPixelSize} height={canvasPixelSize} patternUnits="userSpaceOnUse"
                stroke="#8888">
-        <line x1={0} x2={10} strokeWidth={1} />
-        <line y1={0} y2={10} strokeWidth={1} />
+        <line x1={0} x2={canvasPixelSize} strokeWidth={1} />
+        <line y1={0} y2={canvasPixelSize} strokeWidth={1} />
       </pattern>
-      <rect stroke="black" width={size[0] * 10 + 1} height={size[1] * 10 + 1} x={canvasOffset.x} y={canvasOffset.y} strokeWidth={2} className="page" />
-      <rect fill="url(#grid)" width="200%" height="200%" className="grid" />
+      <rect stroke="black" width={size[0] * canvasPixelSize + 1} height={size[1] * canvasPixelSize + 1} x={canvasOffset.x} y={canvasOffset.y} strokeWidth={2}
+            className="page" />
+
+      {canvasPixelSize === 1 ? null : <rect fill="url(#grid)" width="200%" height="200%" className="grid" />}
     </svg>
     <div className="sidebar">
       <div>New</div>
