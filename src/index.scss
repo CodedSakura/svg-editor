@@ -96,3 +96,8 @@ svg.canvas {
     height: 100%;
   }
 }
+
+.textarea {
+  overflow: auto;
+  white-space: pre;
+}

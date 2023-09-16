@@ -1,5 +1,6 @@
 import * as classNames from "classnames";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { SVGElements } from "./objects.tsx";
 
 enum DragModalState {
   OFF = "auto",
@@ -8,7 +9,7 @@ enum DragModalState {
 
 enum Tool {
   CURSOR,
-  SQUARE,
+  RECT,
   ELLIPSE,
   LINE,
   ARC,
@@ -19,7 +20,7 @@ enum Tool {
 
 const toolList = [
   [
-    Tool.SQUARE,
+    Tool.RECT,
     Tool.ELLIPSE,
   ], [
     Tool.LINE,
@@ -34,7 +35,7 @@ const toolList = [
 ] as const;
 const toolData: Record<Tool, { name: string, description?: string }> = {
   [Tool.CURSOR]: { name: "Cursor" },
-  [Tool.SQUARE]: { name: "Square" },
+  [Tool.RECT]: { name: "Rectangle" },
   [Tool.ELLIPSE]: { name: "Ellipse" },
   [Tool.LINE]: { name: "Line" },
   [Tool.ARC]: { name: "Arc" },
@@ -70,6 +71,10 @@ function getKeyboardModifierState(event: MouseEvent | KeyboardEvent | React.Mous
   return +shift << _KbdMod.Shift | +ctrl << _KbdMod.Ctrl | +alt << _KbdMod.Alt;
 }
 
+interface CUtilProps {
+  absoluteCoords?: boolean,
+  rounded?: boolean,
+}
 
 export default function App() {
   const [ size, setSize ] = useState([ 16, 16 ]);
@@ -80,7 +85,32 @@ export default function App() {
   const [ canvasOffset, setCanvasOffset ] = useState({ x: 0, y: 0 });
   const [ canvasPixelSize, setCanvasPixelSize ] = useState(10);
   // const [ propertyPanel, setPropertyPanel ] = useState(PropertyPanel.NONE);
+  const [ elements, setElements ] = useState<SVGElements.Element[]>([]);
+  const [ dragStart, setDragStart ] = useState({ x: 0, y: 0 });
+
   const canvasRef = useRef<SVGSVGElement>(null);
+
+
+  const cUtil = {
+    toCanvas: (v: [ number, number ] | { x: number, y: number }, { absoluteCoords = true, rounded = true } = {}): [ number, number ] => {
+      const round = rounded ? Math.round : (v: number) => v;
+      const offset = absoluteCoords ? canvasOffset : { x: 0, y: 0 };
+
+      let x: number, y: number;
+      if (Array.isArray(v)) {
+        [ x, y ] = v;
+      } else {
+        ({ x, y } = v);
+      }
+
+      return [
+        round((x - offset.x) / canvasPixelSize),
+        round((y - offset.y) / canvasPixelSize),
+      ];
+    },
+    toCanvasX: (x: number, props?: CUtilProps): number => cUtil.toCanvas([ x, 0 ], props)[0],
+    toCanvasY: (y: number, props?: CUtilProps): number => cUtil.toCanvas([ 0, y ], props)[1],
+  };
 
 
   useEffect(() => {
@@ -112,12 +142,18 @@ export default function App() {
 
   const canvasMouseDownEvent = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    console.log("down", e.buttons);
-  }, []);
+    setDragStart({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+
+    if (tool === Tool.RECT && e.buttons === 1) {
+      setElements(v => [
+        new SVGElements.Rectangle(...cUtil.toCanvas([ e.nativeEvent.offsetX, e.nativeEvent.offsetY ])),
+        ...v,
+      ]);
+    }
+  }, [ tool ]);
 
   const canvasMouseUpEvent = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    console.log("up", e.buttons);
   }, []);
 
   const canvasMouseMoveEvent = useCallback((e: React.MouseEvent) => {
@@ -126,8 +162,24 @@ export default function App() {
     if ((tool === Tool.MOVE && e.buttons === 1) || e.buttons === 4) {
       setCanvasOffset(({ x, y }) => ({ x: x + e.movementX, y: y + e.movementY }));
     }
-    // console.log((e.target as HTMLElement));
-  }, [ tool ]);
+    if (tool === Tool.RECT && e.buttons === 1) {
+      setElements(([ s, ...v ]) => {
+        if (s instanceof SVGElements.Rectangle) {
+          const { x: sx, y: sy } = dragStart;
+          const mx = e.nativeEvent.offsetX, my = e.nativeEvent.offsetY;
+
+          const w = cUtil.toCanvasX(mx - sx, { absoluteCoords: false });
+          const h = cUtil.toCanvasX(my - sy, { absoluteCoords: false });
+
+          s.width = Math.abs(w);
+          s.height = Math.abs(h);
+          s.x = cUtil.toCanvasX(sx) + (w < 0 ? w : 0);
+          s.y = cUtil.toCanvasY(sy) + (h < 0 ? h : 0);
+        }
+        return [ s, ...v ];
+      });
+    }
+  }, [ tool, dragStart ]);
 
   const canvasScrollEvent = useCallback((e: WheelEvent) => {
     e.preventDefault();
@@ -197,6 +249,8 @@ export default function App() {
       <rect stroke="black" width={size[0] * canvasPixelSize + 1} height={size[1] * canvasPixelSize + 1} x={canvasOffset.x} y={canvasOffset.y} strokeWidth={2}
             className="page" />
 
+      {elements.map((v, i) => v.toJSX(canvasOffset, canvasPixelSize, i))}
+
       {canvasPixelSize === 1 ? null : <rect fill="url(#grid)" width="200%" height="200%" className="grid" />}
     </svg>
     <div className="sidebar">
@@ -215,7 +269,9 @@ export default function App() {
       <div>W</div>
       <div>E</div>
     </div>
-    <div className="textarea" style={{ height: bottomHeight }}>Textarea</div>
+    <div className="textarea" style={{ height: bottomHeight }}>
+      {elements.map((v, i) => v.toText()).join("\n")}
+    </div>
     <div className="sidebar" style={{ height: bottomHeight }}>
       <div>A</div>
       <div>S</div>
